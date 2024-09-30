@@ -85,7 +85,7 @@ function Swap() {
 
   async function fetchPrices(one, two) {
 
-    const res = await axios.get(`http://localhost:9001/tokenPrice`, {
+    const res = await axios.get(`https://web3-app-backend.onrender.com/tokenPrice`, {
       params: { addressOne: one, addressTwo: two }
     })
 
@@ -95,32 +95,34 @@ function Swap() {
 
   const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjBlNTMxNTE1LTY1ODgtNGJmYS1hNTY5LTgyMTg2YTljODIxMCIsIm9yZ0lkIjoiNDA5ODQwIiwidXNlcklkIjoiNDIxMTU5IiwidHlwZUlkIjoiM2ZhNjkxYmMtODk3YS00YjkwLWI0ZDAtYjk4YTg4ZWZhOTc1IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3Mjc1OTU0ODQsImV4cCI6NDg4MzM1NTQ4NH0.7rZ_sck4n_ywQfybCwPNDDXr1j8EFi9pkEbh5IxMusc"
   async function fetchDexSwap() {
+    try {
+      const allowance = await axios.get(`https://api.1inch.io/v6.0/137/approve/allowance?tokenAddress=${tokenOne.address}&walletAddress=${address}`, {
+        headers: {
+          Accept: 'application/json',
+          'X-API-Key': apiKey,
+        },
+      })
 
-    const allowance = await axios.get(`https://api.1inch.io/v5.0/1/approve/allowance?tokenAddress=${tokenOne.address}&walletAddress=${address}`, {
-      headers: {
-        Accept: 'application/json',
-        'X-API-Key': apiKey,
-      },
-    })
-    console.log(allowance, 'allowance')
-    if (allowance.data.allowance === "0") {
+      console.log(allowance, 'allowance')
+      if (allowance.data.allowance === "0") {
+        const approve = await axios.get(`https://api.1inch.io/v6.0/137/approve/transaction?tokenAddress=${tokenOne.address}`)
+        setTxDetails(approve.data);
+        console.log("not approved")
+        return
+      }
+      const tx = await axios.get(
+        `https://api.1inch.io/v6.0/137/v6.0/137/swap?fromTokenAddress=${tokenOne.address}&toTokenAddress=${tokenTwo.address}&amount=${tokenOneAmount.padEnd(tokenOne.decimals + tokenOneAmount.length, '0')}&fromAddress=${address}&slippage=${slippage}`
+      )
 
-      const approve = await axios.get(`https://api.1inch.io/v5.0/1/approve/transaction?tokenAddress=${tokenOne.address}`)
+      let decimals = Number(`1E${tokenTwo.decimals}`)
+      setTokenTwoAmount((Number(tx.data.toTokenAmount) / decimals).toFixed(2));
 
-      setTxDetails(approve.data);
-      console.log("not approved")
-      return
-
+      setTxDetails(tx.data.tx);
+    }
+    catch (err) {
+      console.log('Error:', err);
     }
 
-    const tx = await axios.get(
-      `https://api.1inch.io/v5.0/1/swap?fromTokenAddress=${tokenOne.address}&toTokenAddress=${tokenTwo.address}&amount=${tokenOneAmount.padEnd(tokenOne.decimals + tokenOneAmount.length, '0')}&fromAddress=${address}&slippage=${slippage}`
-    )
-
-    let decimals = Number(`1E${tokenTwo.decimals}`)
-    setTokenTwoAmount((Number(tx.data.toTokenAmount) / decimals).toFixed(2));
-
-    setTxDetails(tx.data.tx);
 
   }
 
