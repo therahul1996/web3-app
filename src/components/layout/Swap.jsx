@@ -8,6 +8,7 @@ import {
 import tokenList from "../../data/tokenList.json";
 import axios from "axios";
 import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
+import { useAppKitState } from "@reown/appkit/react";
 
 
 function Swap() {
@@ -21,6 +22,9 @@ function Swap() {
   const [isOpen, setIsOpen] = useState(false);
   const [changeToken, setChangeToken] = useState(1);
   const [prices, setPrices] = useState(null);
+  const { selectedNetworkId } = useAppKitState()
+  console.log(selectedNetworkId.replace('eip155:', ''))
+
   const [txDetails, setTxDetails] = useState({
     to: null,
     data: null,
@@ -92,41 +96,90 @@ function Swap() {
 
     setPrices(res.data)
   }
+  // async function fetchDexSwap() {
+  //   try {
+  //     const allowance = await axios.get(`https://api.1inch.dev/swap/v6.0/${selectedNetworkId.replace('eip155:', '')}/approve/allowance`, {
+  //       headers: {
+  //         Accept: 'application/json',
+  //         "Authorization": "Bearer 001ReTUf6iepbN7VPfbMd0Y5w5MWEUuD"
+  //       },
+  //       params: {
+  //         tokenAddress: tokenOne.address,
+  //         walletAddress: address,
+  //       },
+  //       paramsSerializer: {
+  //         indexes: null
+  //       }
+  //     })
 
-  const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjBlNTMxNTE1LTY1ODgtNGJmYS1hNTY5LTgyMTg2YTljODIxMCIsIm9yZ0lkIjoiNDA5ODQwIiwidXNlcklkIjoiNDIxMTU5IiwidHlwZUlkIjoiM2ZhNjkxYmMtODk3YS00YjkwLWI0ZDAtYjk4YTg4ZWZhOTc1IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3Mjc1OTU0ODQsImV4cCI6NDg4MzM1NTQ4NH0.7rZ_sck4n_ywQfybCwPNDDXr1j8EFi9pkEbh5IxMusc"
+  //     console.log(allowance, 'allowance')
+  //     if (allowance.data.allowance === "0") {
+  //       const approve = await axios.get(`https://api.1inch.dev/swap/v6.0/${selectedNetworkId.replace('eip155:', '')}/approve/transaction`, {
+  //         headers: {
+  //           Accept: 'application/json',
+  //           "Authorization": "Bearer 001ReTUf6iepbN7VPfbMd0Y5w5MWEUuD"
+  //         },
+  //         params: {},
+  //         paramsSerializer: {
+  //           indexes: null
+  //         }
+  //       })
+
+  //       setTxDetails(approve.data);
+  //       console.log("not approved")
+  //       return
+  //     }
+  //     const tx = await axios.get(
+  //       `https://api.1inch.io/v6.0/137/v6.0/137/swap?fromTokenAddress=${tokenOne.address}&toTokenAddress=${tokenTwo.address}&amount=${tokenOneAmount.padEnd(tokenOne.decimals + tokenOneAmount.length, '0')}&fromAddress=${address}&slippage=${slippage}`, {
+  //       headers: {
+  //         Accept: 'application/json',
+  //         "Authorization": "Bearer 001ReTUf6iepbN7VPfbMd0Y5w5MWEUuD"
+  //       },
+  //       params: {},
+  //       paramsSerializer: {
+  //         indexes: null
+  //       }
+  //     }
+  //     )
+
+  //     let decimals = Number(`1E${tokenTwo.decimals}`)
+  //     setTokenTwoAmount((Number(tx.data.toTokenAmount) / decimals).toFixed(2));
+
+  //     setTxDetails(tx.data.tx);
+  //   }
+  //   catch (err) {
+  //     console.log('Error:', err);
+  //   }
+
+
+  // }
+
   async function fetchDexSwap() {
-    try {
-      const allowance = await axios.get(`https://api.1inch.io/v6.0/137/approve/allowance?tokenAddress=${tokenOne.address}&walletAddress=${address}`, {
-        headers: {
-          Accept: 'application/json',
-          'X-API-Key': apiKey,
-        },
-      })
 
-      console.log(allowance, 'allowance')
-      if (allowance.data.allowance === "0") {
-        const approve = await axios.get(`https://api.1inch.io/v6.0/137/approve/transaction?tokenAddress=${tokenOne.address}`)
-        setTxDetails(approve.data);
-        console.log("not approved")
-        return
+    const url = `https://api.1inch.dev/swap/v6.0/${selectedNetworkId.replace('eip155:', '')}/approve/allowance`;
+    const config = {
+      headers: {
+        Accept: 'application/json',
+        Authorization: "Bearer 001ReTUf6iepbN7VPfbMd0Y5w5MWEUuD",
+        "Access-Control-Allow-Origin": "*",
+      },
+      params: {
+        tokenAddress: tokenOne.address,
+        walletAddress: address,
+      },
+      paramsSerializer: {
+        indexes: null
       }
-      const tx = await axios.get(
-        `https://api.1inch.io/v6.0/137/v6.0/137/swap?fromTokenAddress=${tokenOne.address}&toTokenAddress=${tokenTwo.address}&amount=${tokenOneAmount.padEnd(tokenOne.decimals + tokenOneAmount.length, '0')}&fromAddress=${address}&slippage=${slippage}`
-      )
+    };
 
-      let decimals = Number(`1E${tokenTwo.decimals}`)
-      setTokenTwoAmount((Number(tx.data.toTokenAmount) / decimals).toFixed(2));
 
-      setTxDetails(tx.data.tx);
+    try {
+      const response = await axios.get(url, config);
+      console.log(response.data);
+    } catch (error) {
+      console.error(error);
     }
-    catch (err) {
-      console.log('Error:', err);
-    }
-
-
   }
-
-
   useEffect(() => {
 
     fetchPrices(tokenList[0].address, tokenList[1].address)
