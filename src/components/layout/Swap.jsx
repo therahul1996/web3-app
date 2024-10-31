@@ -96,90 +96,81 @@ function Swap() {
 
     setPrices(res.data)
   }
-  // async function fetchDexSwap() {
-  //   try {
-  //     const allowance = await axios.get(`https://api.1inch.dev/swap/v6.0/${selectedNetworkId.replace('eip155:', '')}/approve/allowance`, {
-  //       headers: {
-  //         Accept: 'application/json',
-  //         "Authorization": "Bearer 001ReTUf6iepbN7VPfbMd0Y5w5MWEUuD"
-  //       },
-  //       params: {
-  //         tokenAddress: tokenOne.address,
-  //         walletAddress: address,
-  //       },
-  //       paramsSerializer: {
-  //         indexes: null
-  //       }
-  //     })
-
-  //     console.log(allowance, 'allowance')
-  //     if (allowance.data.allowance === "0") {
-  //       const approve = await axios.get(`https://api.1inch.dev/swap/v6.0/${selectedNetworkId.replace('eip155:', '')}/approve/transaction`, {
-  //         headers: {
-  //           Accept: 'application/json',
-  //           "Authorization": "Bearer 001ReTUf6iepbN7VPfbMd0Y5w5MWEUuD"
-  //         },
-  //         params: {},
-  //         paramsSerializer: {
-  //           indexes: null
-  //         }
-  //       })
-
-  //       setTxDetails(approve.data);
-  //       console.log("not approved")
-  //       return
-  //     }
-  //     const tx = await axios.get(
-  //       `https://api.1inch.io/v6.0/137/v6.0/137/swap?fromTokenAddress=${tokenOne.address}&toTokenAddress=${tokenTwo.address}&amount=${tokenOneAmount.padEnd(tokenOne.decimals + tokenOneAmount.length, '0')}&fromAddress=${address}&slippage=${slippage}`, {
-  //       headers: {
-  //         Accept: 'application/json',
-  //         "Authorization": "Bearer 001ReTUf6iepbN7VPfbMd0Y5w5MWEUuD"
-  //       },
-  //       params: {},
-  //       paramsSerializer: {
-  //         indexes: null
-  //       }
-  //     }
-  //     )
-
-  //     let decimals = Number(`1E${tokenTwo.decimals}`)
-  //     setTokenTwoAmount((Number(tx.data.toTokenAmount) / decimals).toFixed(2));
-
-  //     setTxDetails(tx.data.tx);
-  //   }
-  //   catch (err) {
-  //     console.log('Error:', err);
-  //   }
-
-
-  // }
-
   async function fetchDexSwap() {
-
-    const url = `https://api.1inch.dev/swap/v6.0/${selectedNetworkId.replace('eip155:', '')}/approve/allowance`;
-    const config = {
-      headers: {
-        Accept: 'application/json',
-        Authorization: "Bearer 001ReTUf6iepbN7VPfbMd0Y5w5MWEUuD",
-        "Access-Control-Allow-Origin": "*",
-      },
-      params: {
-        tokenAddress: tokenOne.address,
-        walletAddress: address,
-      },
-      paramsSerializer: {
-        indexes: null
-      }
-    };
-
+    const networkId = selectedNetworkId.replace('eip155:', '');
+    const amount = tokenOneAmount.padEnd(tokenOne.decimals + tokenOneAmount.length, '0');
 
     try {
-      const response = await axios.get(url, config);
-      console.log(response.data);
-    } catch (error) {
-      console.error(error);
+      const allowance = await axios.get(`https://web3-app-backend.onrender.com/allowance`, {
+        params: {
+          networkId: networkId,
+          tokenAddress: tokenOne.address,
+          walletAddress: address,
+        },
+      })
+
+      console.log(allowance, 'allowance')
+      if (allowance.data.allowance === "0") {
+        const approve = await axios.get(`https://web3-app-backend.onrender.com/transaction`, {
+          params: {
+            networkId: networkId,
+            amount: amount,
+            tokenAddress: tokenOne.address,
+          },
+        })
+
+        console.log(approve, 'approve')
+        setTxDetails(approve.data);
+        console.log("not approved")
+        return
+      }
+      const tx = await axios.get(
+        `https://api.1inch.io/v6.0/137/v6.0/137/swap?fromTokenAddress=${tokenOne.address}&toTokenAddress=${tokenTwo.address}&amount=${tokenOneAmount.padEnd(tokenOne.decimals + tokenOneAmount.length, '0')}&fromAddress=${address}&slippage=${slippage}`, {
+        headers: {
+          Accept: 'application/json',
+          "Authorization": "Bearer 001ReTUf6iepbN7VPfbMd0Y5w5MWEUuD"
+        },
+        params: {},
+        paramsSerializer: {
+          indexes: null
+        }
+      }
+      )
+
+      let decimals = Number(`1E${tokenTwo.decimals}`)
+      setTokenTwoAmount((Number(tx.data.toTokenAmount) / decimals).toFixed(2));
+
+      setTxDetails(tx.data.tx);
     }
+    catch (err) {
+      console.log('Error:', err);
+    }
+
+
   }
+
+  // async function fetchDexSwap() {
+
+  //   const url = `https://api.1inch.dev/swap/v6.0/${selectedNetworkId.replace('eip155:', '')}/approve/allowance`;
+  //   const config = {
+
+  //     params: {
+  //       tokenAddress: tokenOne.address,
+  //       walletAddress: address,
+  //     },
+  //     paramsSerializer: {
+  //       indexes: null
+  //     }
+  //   };
+
+
+  //   try {
+  //     const response = await axios.get(url, config);
+  //     console.log(response.data);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }
   useEffect(() => {
 
     fetchPrices(tokenList[0].address, tokenList[1].address)
