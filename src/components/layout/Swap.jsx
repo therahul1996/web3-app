@@ -124,26 +124,36 @@ function Swap() {
         console.log("not approved")
         return
       }
-      const tx = await axios.get(
-        `https://api.1inch.io/v6.0/137/v6.0/137/swap?fromTokenAddress=${tokenOne.address}&toTokenAddress=${tokenTwo.address}&amount=${tokenOneAmount.padEnd(tokenOne.decimals + tokenOneAmount.length, '0')}&fromAddress=${address}&slippage=${slippage}`, {
-        headers: {
-          Accept: 'application/json',
-          "Authorization": "Bearer 001ReTUf6iepbN7VPfbMd0Y5w5MWEUuD"
-        },
-        params: {},
-        paramsSerializer: {
-          indexes: null
-        }
-      }
-      )
 
+      const tx = await axios.get('https://web3-app-backend.onrender.com/swap', {
+        params: {
+          networkId: networkId,
+          src: tokenOne.address,
+          dst: tokenTwo.address,
+          amount: amount,
+          from: address,
+          slippage: slippage,
+          disableEstimate: false,
+          allowPartialFill: false,
+        },
+      })
+      console.log(tx, 'tx')
       let decimals = Number(`1E${tokenTwo.decimals}`)
       setTokenTwoAmount((Number(tx.data.toTokenAmount) / decimals).toFixed(2));
 
       setTxDetails(tx.data.tx);
     }
     catch (err) {
-      console.log('Error:', err);
+      if (err.response) {
+        // console.log('Error Status:', err.response.status);
+        console.log('Error Data:', err.response.data.description);
+        // console.log('Error Headers:', err.response.headers);
+      } else if (err.request) {
+        console.log('No Response:', err.request);
+      } else {
+        console.log('Error Message:', err.message);
+      }
+      console.log('Config:', err.config);
     }
 
 
